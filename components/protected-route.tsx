@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth-context';
 
 type ProtectedRouteProps = {
   children: React.ReactNode;
-  requiredRole?: 'ADMIN' | 'WORKER' | 'admin' | 'worker';
+  requiredRole?: 'ADMIN' | 'WORKER' | 'MANAGER' | 'admin' | 'worker' | 'manager';
 };
 
 export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {

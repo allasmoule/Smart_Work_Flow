@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signIn } from '@/lib/supabase/auth';
+import { supabase } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,8 +25,25 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      await signIn(email, password);
-      router.push('/');
+      const { user } = await signIn(email, password);
+
+      if (user) {
+        // Fetch profile to check role
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+
+        if (profile?.role === 'admin' || profile?.role === 'ADMIN') {
+          router.push('/admin');
+        } else if (profile?.role === 'manager' || profile?.role === 'MANAGER') {
+          router.push('/manager');
+        } else {
+          router.push('/worker');
+        }
+      }
+
       router.refresh();
     } catch (err: any) {
       setError(err.message || 'Failed to sign in');

@@ -32,11 +32,22 @@ const workerNavItems = [
   { href: '/live', label: 'Live View', icon: Radio },
 ];
 
+const managerNavItems = [
+  { href: '/manager', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/manager/tasks', label: 'Team Tasks', icon: ClipboardList },
+  { href: '/manager/team', label: 'My Team', icon: Users },
+  { href: '/manager/workers', label: 'Workers', icon: Users },
+  { href: '/live', label: 'Live View', icon: Radio },
+];
+
 export function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { profile } = useAuth();
   const userRole = (profile as any)?.role?.toUpperCase() || '';
-  const navItems = userRole === 'ADMIN' ? adminNavItems : workerNavItems;
+
+  let navItems = workerNavItems;
+  if (userRole === 'ADMIN') navItems = adminNavItems;
+  else if (userRole === 'MANAGER') navItems = managerNavItems;
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">

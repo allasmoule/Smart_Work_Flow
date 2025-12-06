@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Clock, User, AlertCircle, CheckCircle2, Edit, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { format } from 'date-fns';
 import {
   AlertDialog,
@@ -97,6 +98,26 @@ export function TasksList({ tasks, workers, onUpdate }: TasksListProps) {
     );
   }
 
+  async function handleSendWarning(task: Task) {
+    if (!task.assigned_to) return;
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: task.assigned_to,
+          type: 'warning',
+          title: 'Task Delayed Warning',
+          body: `Your task "${task.title}" is overdue. Please submit immediately or contact manager.`,
+          read: false
+        });
+      if (error) throw error;
+      toast.success('Warning sent to worker');
+    } catch (error) {
+      console.error('Error sending warning:', error);
+      toast.error('Failed to send warning');
+    }
+  }
+
   return (
     <>
       <div className="space-y-4">
@@ -110,6 +131,7 @@ export function TasksList({ tasks, workers, onUpdate }: TasksListProps) {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
+                      {/* ... existing badges ... */}
                       <h3 className="text-lg font-semibold">{task.title}</h3>
                       <Badge className={getStatusColor(task.status)}>
                         {task.status.replace('_', ' ')}
@@ -142,6 +164,17 @@ export function TasksList({ tasks, workers, onUpdate }: TasksListProps) {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 ml-4">
+                    {delayed && (
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleSendWarning(task)}
+                        title="Send Warning"
+                      >
+                        <AlertCircle className="h-4 w-4 mr-1" />
+                        Warn
+                      </Button>
+                    )}
                     {task.status === 'submitted' && (
                       <Button
                         size="sm"
@@ -175,6 +208,7 @@ export function TasksList({ tasks, workers, onUpdate }: TasksListProps) {
       </div>
 
       <AlertDialog open={!!deleteTaskId} onOpenChange={() => setDeleteTaskId(null)}>
+        {/* ... existing alert dialog ... */}
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Task</AlertDialogTitle>

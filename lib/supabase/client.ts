@@ -5,17 +5,30 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholde
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+export type Role = 'ADMIN' | 'MANAGER' | 'WORKER' | 'admin' | 'manager' | 'worker';
+
 export type Profile = {
   id: string;
   email: string;
   full_name: string;
-  role: 'admin' | 'worker';
+  role: Role;
+  team_id?: string | null;
   created_at: string;
   updated_at: string;
 };
 
-export type TaskStatus = 'pending' | 'in_progress' | 'submitted' | 'approved';
-export type TaskPriority = 'low' | 'medium' | 'high';
+export type Team = {
+  id: string;
+  name: string;
+  manager_id: string;
+  created_at: string;
+  updated_at: string;
+  manager?: Profile;
+  members?: Profile[];
+};
+
+export type TaskStatus = 'PENDING' | 'IN_PROGRESS' | 'SUBMITTED' | 'APPROVED' | 'pending' | 'in_progress' | 'submitted' | 'approved';
+export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'low' | 'medium' | 'high';
 
 export type Task = {
   id: string;

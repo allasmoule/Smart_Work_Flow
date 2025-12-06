@@ -12,9 +12,11 @@ export default function Home() {
     if (!loading) {
       if (!user) {
         router.push('/login');
-      } else if (profile?.role === 'admin') {
+      } else if (profile?.role === 'admin' || profile?.role === 'ADMIN') {
         router.push('/admin');
-      } else if (profile?.role === 'worker') {
+      } else if (profile?.role === 'manager' || profile?.role === 'MANAGER') {
+        router.push('/manager');
+      } else if (profile?.role === 'worker' || profile?.role === 'WORKER') {
         router.push('/worker');
       }
     }
