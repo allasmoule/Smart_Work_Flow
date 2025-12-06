@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity, Users, ClipboardList, AlertCircle } from 'lucide-react';
+import { AiTaskMonitor } from '@/components/manager/ai-monitor';
 
 export default function ManagerDashboard() {
     const { profile } = useAuth();
@@ -73,10 +74,14 @@ export default function ManagerDashboard() {
                     </Card>
                 </div>
 
-                {/* Recent Activity or Task List could go here */}
-                <div className="p-4 bg-white rounded-lg border shadow-sm">
-                    <h2 className="text-xl font-semibold mb-4">Team Overview</h2>
-                    <p className="text-slate-500">Feature in progress...</p>
+                {/* AI & Analytics Section */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <AiTaskMonitor />
+
+                    <div className="p-4 bg-white rounded-lg border shadow-sm">
+                        <h2 className="text-xl font-semibold mb-4">Team Overview</h2>
+                        <p className="text-slate-500">List of active teams and performance...</p>
+                    </div>
                 </div>
             </div>
         </Layout>

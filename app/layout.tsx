@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { AuthProvider } from '@/lib/auth-context';
 import { Footer } from '@/components/Footer';
+import { GlobalChat } from '@/components/GlobalChat';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -22,6 +23,7 @@ export default function RootLayout({
         <AuthProvider>
           <div className="flex min-h-screen flex-col">
             <div className="flex-1">{children}</div>
+            <GlobalChat />
             <Footer />
           </div>
         </AuthProvider>

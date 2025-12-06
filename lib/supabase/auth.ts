@@ -11,7 +11,7 @@ export async function signUp(email: string, password: string, fullName: string, 
 
   const { error: profileError } = await supabase
     .from('profiles')
-    .insert({
+    .upsert({
       id: authData.user.id,
       email,
       full_name: fullName,

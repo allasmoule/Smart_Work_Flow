@@ -3,13 +3,12 @@
 import { useEffect, useState } from 'react';
 import { Layout } from '@/components/Layout';
 import { KPI } from '@/components/KPI';
-import { TaskCard, TaskCardData } from '@/components/TaskCard';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Radio, ClipboardList, TrendingUp, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
-import { useTaskRealtime } from '@/lib/useTaskRealtime';
+import { TaskCard } from '@/components/TaskCard';
+import { supabase, Task } from '@/lib/supabase/client';
+import { ClipboardList, TrendingUp, CheckCircle2, AlertCircle, Radio } from 'lucide-react';
 
 export default function LivePage() {
-  const [tasks, setTasks] = useState<TaskCardData[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [stats, setStats] = useState({
     totalTasks: 0,
     inProgress: 0,
@@ -19,50 +18,63 @@ export default function LivePage() {
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(new Date());
 
-  // Subscribe to realtime updates
-  useTaskRealtime((event) => {
-    if (event.type === 'task_updated' || event.type === 'task_created') {
-      loadTasks();
-    }
-  });
-
   useEffect(() => {
-    loadTasks();
-    const interval = setInterval(loadTasks, 30000); // Refresh every 30s
-    return () => clearInterval(interval);
+    fetchTasks();
+
+    // Real-time subscription
+    const channel = supabase
+      .channel('live-tasks')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'tasks' },
+        (payload) => {
+          console.log('Real-time update:', payload);
+          fetchTasks(); // Reload all tasks on any change
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
-  async function loadTasks() {
+  async function fetchTasks() {
     try {
-      const res = await fetch('/api/tasks');
-      if (res.ok) {
-        const data = await res.json();
-        setTasks(data.map((t: any) => ({
-          ...t,
-          deadline: new Date(t.deadline),
-          createdAt: new Date(t.createdAt),
-        })));
-        calculateStats(data);
+      const { data, error } = await supabase
+        .from('tasks')
+        .select(`
+            *,
+            created_by_profile:profiles!tasks_created_by_fkey(full_name),
+            assigned_to_profile:profiles!tasks_assigned_to_fkey(full_name)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching tasks:', error);
+      } else {
+        setTasks(data || []);
+        calculateStats(data || []);
         setLastUpdate(new Date());
       }
     } catch (error) {
-      console.error('Error loading tasks:', error);
+      console.error('Unexpected error:', error);
     } finally {
       setLoading(false);
     }
   }
 
-  function calculateStats(tasksData: any[]) {
+  function calculateStats(tasksData: Task[]) {
     const now = new Date();
     const overdue = tasksData.filter(
-      (t) => t.status !== 'APPROVED' && new Date(t.deadline) < now
+      (t) => t.status !== 'approved' && new Date(t.deadline) < now
     ).length;
 
     setStats({
       totalTasks: tasksData.length,
-      inProgress: tasksData.filter((t) => t.status === 'IN_PROGRESS').length,
+      inProgress: tasksData.filter((t) => t.status === 'in_progress').length,
       overdue,
-      completed: tasksData.filter((t) => t.status === 'APPROVED').length,
+      completed: tasksData.filter((t) => t.status === 'approved').length,
     });
   }
 
@@ -93,36 +105,36 @@ export default function LivePage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="transform transition-all hover:scale-105">
-            <KPI 
-              title="Total Tasks" 
-              value={stats.totalTasks} 
+            <KPI
+              title="Total Tasks"
+              value={stats.totalTasks}
               icon={ClipboardList}
               className="bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200"
             />
           </div>
           <div className="transform transition-all hover:scale-105">
-            <KPI 
-              title="In Progress" 
-              value={stats.inProgress} 
-              icon={TrendingUp} 
+            <KPI
+              title="In Progress"
+              value={stats.inProgress}
+              icon={TrendingUp}
               iconClassName="text-blue-600"
               className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200"
             />
           </div>
           <div className="transform transition-all hover:scale-105">
-            <KPI 
-              title="Overdue" 
-              value={stats.overdue} 
-              icon={AlertCircle} 
+            <KPI
+              title="Overdue"
+              value={stats.overdue}
+              icon={AlertCircle}
               iconClassName="text-red-600"
               className="bg-gradient-to-br from-red-50 to-red-100 border-red-200"
             />
           </div>
           <div className="transform transition-all hover:scale-105">
-            <KPI 
-              title="Completed" 
-              value={stats.completed} 
-              icon={CheckCircle2} 
+            <KPI
+              title="Completed"
+              value={stats.completed}
+              icon={CheckCircle2}
               iconClassName="text-green-600"
               className="bg-gradient-to-br from-green-50 to-green-100 border-green-200"
             />
@@ -142,11 +154,28 @@ export default function LivePage() {
               <p className="text-slate-500 text-lg">No tasks found</p>
             </div>
           ) : (
-            tasks.map(task => (
-              <div key={task.id} className="transform transition-all hover:scale-105">
-                <TaskCard task={task} />
-              </div>
-            ))
+            tasks.map((task) => {
+              // Map Supabase Task to TaskCardData
+              const taskData = {
+                id: task.id,
+                title: task.title,
+                description: task.description,
+                status: task.status.toUpperCase() as any,
+                priority: task.priority.toUpperCase() as any,
+                deadline: task.deadline,
+                createdAt: task.created_at,
+                assignedTo: (task as any).assigned_to_profile ? {
+                  name: (task as any).assigned_to_profile.full_name,
+                  image: null
+                } : null
+              };
+
+              return (
+                <div key={task.id} className="transform transition-all hover:scale-105">
+                  <TaskCard task={taskData} />
+                </div>
+              );
+            })
           )}
         </div>
       </div>

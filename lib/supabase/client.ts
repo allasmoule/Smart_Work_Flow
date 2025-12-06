@@ -57,3 +57,11 @@ export type TaskFile = {
   uploaded_by: string | null;
   uploaded_at: string;
 };
+
+export type Message = {
+  id: string;
+  content: string;
+  user_id: string;
+  created_at: string;
+  profile?: Profile;
+};

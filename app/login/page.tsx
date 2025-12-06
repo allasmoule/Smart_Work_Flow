@@ -29,11 +29,16 @@ export default function LoginPage() {
 
       if (user) {
         // Fetch profile to check role
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('role')
           .eq('id', user.id)
           .single();
+
+        if (profileError || !profile) {
+          console.error("Profile missing/error for user:", user.id, profileError);
+          throw new Error("Account exists giving but Profile data is missing. Please Register again with the SAME email to repair your account.");
+        }
 
         if (profile?.role === 'admin' || profile?.role === 'ADMIN') {
           router.push('/admin');

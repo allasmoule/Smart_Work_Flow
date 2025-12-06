@@ -154,7 +154,7 @@ export function SubmitTaskDialog({ task, open, onOpenChange, onSuccess }: Submit
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="files">Upload Files/Images</Label>
+            <Label htmlFor="files">Upload Files/Images (Optional)</Label>
             <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center">
               <input
                 id="files"
