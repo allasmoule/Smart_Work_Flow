@@ -1,0 +1,131 @@
+// Prisma schema for SmartWorkFlow
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum Status {
+  PENDING
+  IN_PROGRESS
+  SUBMITTED
+  APPROVED
+  CANCELLED
+}
+
+enum Role {
+  ADMIN
+  WORKER
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  emailVerified DateTime? @map("email_verified")
+  image         String?
+  passwordHash  String?   @map("password_hash")
+  role          Role      @default(WORKER)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  createdTasks  Task[]    @relation("TaskCreator")
+  assignedTasks Task[]    @relation("TaskAssignee")
+  timeEntries   TimeEntry[]
+  notifications Notification[]
+  uploadedFiles TaskFile[]
+
+  @@map("users")
+}
+
+model Task {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  status      Status   @default(PENDING)
+  priority    Priority @default(MEDIUM)
+  deadline    DateTime
+  startedAt   DateTime? @map("started_at")
+  submittedAt DateTime? @map("submitted_at")
+  approvedAt  DateTime? @map("approved_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  assignedToId String? @map("assigned_to_id")
+  assignedTo   User?   @relation("TaskAssignee", fields: [assignedToId], references: [id])
+  createdById  String  @map("created_by_id")
+  createdBy    User    @relation("TaskCreator", fields: [createdById], references: [id])
+
+  files      TaskFile[]
+  timeEntries TimeEntry[]
+
+  @@index([assignedToId])
+  @@index([status])
+  @@index([deadline])
+  @@index([priority])
+  @@map("tasks")
+}
+
+model TaskFile {
+  id         String   @id @default(cuid())
+  taskId     String   @map("task_id")
+  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  fileUrl    String   @map("file_url")
+  fileName   String   @map("file_name")
+  fileSize   Int      @default(0) @map("file_size")
+  mimeType   String?  @map("mime_type")
+  uploadedById String @map("uploaded_by_id")
+  uploadedBy   User   @relation(fields: [uploadedById], references: [id])
+  uploadedAt DateTime @default(now()) @map("uploaded_at")
+
+  @@index([taskId])
+  @@map("task_files")
+}
+
+model TimeEntry {
+  id         String   @id @default(cuid())
+  taskId     String   @map("task_id")
+  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId     String   @map("user_id")
+  user       User     @relation(fields: [userId], references: [id])
+  startAt    DateTime @map("start_at")
+  endAt      DateTime? @map("end_at")
+  durationSec Int?    @map("duration_sec")
+  notes      String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([taskId])
+  @@index([userId])
+  @@index([startAt])
+  @@map("time_entries")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   // 'task_assigned', 'task_updated', 'deadline_approaching', 'deadline_overdue', etc.
+  title     String
+  body      String?
+  data      Json?    // Additional metadata
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([read])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
