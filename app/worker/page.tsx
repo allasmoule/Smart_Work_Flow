@@ -20,6 +20,7 @@ import {
 import { format } from 'date-fns';
 import { SubmitTaskDialog } from '@/components/worker/submit-task-dialog';
 import { WorkerAnalytics } from '@/components/worker/worker-analytics';
+import { WorkHoursChart } from '@/components/worker/work-hours-chart';
 
 export default function WorkerDashboard() {
   const { profile, signOut } = useAuth();
@@ -175,6 +176,11 @@ export default function WorkerDashboard() {
 
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <WorkerAnalytics tasks={tasks} />
+
+          <div className="mb-8">
+            <h2 className="text-xl font-bold text-slate-900 mb-4">Work & Time Tracking</h2>
+            <WorkHoursChart />
+          </div>
 
           <Tabs defaultValue="all" className="space-y-4">
             <TabsList>

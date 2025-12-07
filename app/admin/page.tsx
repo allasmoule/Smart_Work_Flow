@@ -23,6 +23,7 @@ import { ProtectedRoute } from '@/components/protected-route';
 import { TaskCard, TaskCardData } from '@/components/TaskCard';
 import { toast } from 'sonner';
 import { TaskStatusChart } from '@/components/admin/TaskStatusChart';
+import { WorkHoursChart } from '@/components/worker/work-hours-chart';
 import { TaskPriorityChart } from '@/components/admin/TaskPriorityChart';
 import { TaskTrendChart } from '@/components/admin/TaskTrendChart';
 import { WorkerPerformanceChart } from '@/components/admin/WorkerPerformanceChart';
@@ -456,6 +457,10 @@ export default function AdminDashboard() {
                   </div>
                 </CardContent>
               </Card>
+
+              <div className="mt-6">
+                <WorkHoursChart mode="admin" />
+              </div>
             </TabsContent>
 
             {/* Tasks Tab */}
@@ -497,6 +502,11 @@ export default function AdminDashboard() {
               {chartData.workerPerformance.length > 0 && (
                 <WorkerPerformanceChart data={chartData.workerPerformance} />
               )}
+
+              <div className="mt-6">
+                <WorkHoursChart mode="admin" />
+              </div>
+
               {chartData.trends.length === 0 && chartData.completionTime.length === 0 && (
                 <Card className="p-8 text-center text-slate-500">
                   <BarChart3 className="h-12 w-12 mx-auto mb-4 text-slate-400" />
